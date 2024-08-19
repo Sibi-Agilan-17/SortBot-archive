@@ -1,0 +1,9 @@
+tensorflow==2.16.1
+keras
+numpy~=1.26.4
+Pillow~=10.4.0
+opencv-python~=4.10.0.84
+tk
+scipy
+imageio~=2.34.2
+matplotlib~=3.9.1.post1
