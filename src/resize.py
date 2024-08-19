@@ -7,6 +7,8 @@ import imageio.v2 as imageio
 
 from PIL import Image
 
+w = h = 256  # Dimensions of the resized image
+
 
 def resize(image: np.ndarray, dim1: int, dim2: int) -> Image:
     """Resizes an image to the given dimensions."""
@@ -32,7 +34,7 @@ def loop_files(directory: str, file_path: str) -> None:
             if dim1 > dim2:
                 pic = np.rot90(pic)
 
-            resized_img = resize(pic, 256, 256)
+            resized_img = resize(pic, w, h)
             imageio.imsave(os.path.join(file_path, file), resized_img)
 
 

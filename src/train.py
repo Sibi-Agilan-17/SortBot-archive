@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 
-data_dir: str = "./dataset-resized"
+data_dir: str = "./dataset-resized"  # or use `./dataset-original` if not resized
 
 
 # Custom formatter to colorize error messages
@@ -53,8 +53,7 @@ def load_model() -> tf.keras.models.Model:
     """Load the model from the file if it exists, otherwise return a new model."""
     try:
         # load the model
-        # model = tf.keras.models.load_model('trash_recognition_model_epoch100.h5')
-        model = new_model
+        model = tf.keras.models.load_model('trash_recognition_model.h5')
     except FileNotFoundError or OSError as exc:
         model = new_model
         logging.error(f'Error loading model: {exc}')
@@ -107,7 +106,7 @@ def train_model(test: bool = True) -> tf.keras.callbacks.History:
     train_history = model.fit(
         dataset,
         validation_data=validation_dataset,
-        epochs=100  # Number of epochs for training
+        epochs=10  # Number of epochs for training
     )
 
     if test:
