@@ -66,7 +66,7 @@ def generate_dataset(subset: str = "training", batch_size: int = 16) -> tf.data.
     """Generate a dataset from the directory."""
     return image_dataset_from_directory(
         data_dir,
-        validation_split=0.1,
+        validation_split=0.01,
         subset=subset,
         seed=random.randint(2 ** 16, 2 ** 32 - 1),
         image_size=(256, 256),  # resize if needed

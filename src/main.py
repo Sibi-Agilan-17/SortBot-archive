@@ -2,7 +2,6 @@ import logging
 import random
 import sys
 
-import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from tensorflow.keras.preprocessing import image_dataset_from_directory
@@ -24,7 +23,7 @@ def load_model(filename: str = MODEL) -> tf.keras.models.Model:
         sys.exit(-1)
 
 
-def generate_dataset(subset: str = "training", split: float = 0.1, batch_size: int = 16) -> tf.data.Dataset:
+def generate_dataset(subset: str = "training", split: float = 0.01, batch_size: int = 16) -> tf.data.Dataset:
     """Generate a dataset from the directory."""
 
     return image_dataset_from_directory(
@@ -37,7 +36,7 @@ def generate_dataset(subset: str = "training", split: float = 0.1, batch_size: i
     )
 
 
-def test_model(times: int = 100, split: float = 0.1) -> float:
+def test_model(times: int = 100, split: float = 0.01) -> float:
     """Test the model on the dataset and return the average accuracy."""
 
     avg_acc = 0
