@@ -34,6 +34,9 @@ def load_model(filename: str = MODEL) -> tf.keras.models.Model:
         sys.exit(-1)
 
 
+model = load_model()
+
+
 def generate_dataset(subset: str = "training", split: float = 0.01, batch_size: int = 16) -> tf.data.Dataset:
     """Generate a dataset from the directory."""
 
@@ -72,8 +75,7 @@ def predict_image() -> None:
         return
 
     img_path = panel.image_path
-    model = load_model()  # Load the model
-    predicted_class = predict_image_from_path(img_path, model)
+    predicted_class = predict_image_from_path(img_path)
     messagebox.showinfo("Prediction", f"Predicted class: {predicted_class}")
 
     # Play the video in parallel after prediction
@@ -81,15 +83,14 @@ def predict_image() -> None:
     video_thread.start()
 
 
-def predict_image_from_path(image_path: str, model: tf.keras.models.Model) -> str:
+def predict_image_from_path(image_path: str) -> str:
     """Predict the class of an image."""
+    global model
+
     # Load and preprocess the image
     img = image.load_img(image_path, target_size=(256, 256))
     img_array = image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)  # Create batch axis
-
-    # Normalize the image array
-    img_array /= 255.0
 
     # Predict the class
     predictions = model.predict(img_array)
@@ -97,6 +98,7 @@ def predict_image_from_path(image_path: str, model: tf.keras.models.Model) -> st
 
     score = np.array(score)
     ind = np.argmax(score)
+
     # return R for Renewable and N for Non-Renewable
     predicted_class = "R" if ind in [0, 3] else "N"  # 0 for cardboard 3 for paper
 
