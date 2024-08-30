@@ -1,9 +1,7 @@
 import logging
-import os
 import random
 import sys
 import threading
-import time
 
 import cv2
 import numpy as np
@@ -80,7 +78,7 @@ def predict_image() -> None:
 
     # Play the video in parallel after prediction
     video_thread = threading.Thread(target=play_video, args=("./assets/visual/visuals.mp4",))
-    video_thread.start()
+    #  video_thread.start()
 
 
 def predict_image_from_path(image_path: str) -> str:
@@ -99,10 +97,14 @@ def predict_image_from_path(image_path: str) -> str:
     score = np.array(score)
     ind = np.argmax(score)
 
-    # return R for Renewable and N for Non-Renewable
-    predicted_class = "R" if ind in [0, 3] else "N"  # 0 for cardboard 3 for paper
+    # find the class
+    predicted_class = {0: "cardboard", 1: "glass", 2: "metal", 3: "paper", 4: "plastic", 5: "trash"}[ind]
+
+    is_bio_degradable = True if ind in [0, 3] else False
 
     print(f'Predicted class: {predicted_class}')
+    print(f'Is bio-degradable: {is_bio_degradable}')
+    print(f'Confidence: {100 * np.max(score):.2f}%')
     return predicted_class
 
 
