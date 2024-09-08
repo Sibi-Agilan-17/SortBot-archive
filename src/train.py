@@ -1,12 +1,12 @@
 import logging
 import random
+import sys
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from tensorflow.keras.preprocessing import image_dataset_from_directory
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.layers import Conv2D
 
 data_dir: str = "./dataset-resized"  # or use `./dataset-original` if not resized
 
@@ -35,31 +35,47 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
 
-new_model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(256, 256, 3)),
-    MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
-    MaxPooling2D((2, 2)),
-    Conv2D(128, (3, 3), activation='relu'),
-    MaxPooling2D((2, 2)),
-    Flatten(),
-    Dense(512, activation='relu'),
-    Dropout(0.5),  # Add dropout for regularization
-    Dense(6, activation='softmax')  # Assuming 6 classes of trash
-])
+# Define the model
+new_model = tf.keras.Sequential()
+
+# First Convolutional Block
+new_model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(256, 256, 3)))
+new_model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+# Second Convolutional Block
+new_model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+new_model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+# Third Convolutional Block
+new_model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+new_model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+# Fourth Convolutional Block
+new_model.add(tf.keras.layers.Conv2D(256, (3, 3), activation='relu'))
+new_model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+
+# Flatten layer to transition to Dense layers
+new_model.add(tf.keras.layers.Flatten())
+
+# Fully connected Dense Layer
+new_model.add(tf.keras.layers.Dense(128, activation='relu'))
+new_model.add(tf.keras.layers.Dropout(0.5))  # Dropout for regularization
+
+# Output Layer
+new_model.add(tf.keras.layers.Dense(6, activation='softmax'))  # 6 output categories
 
 
-def load_model() -> tf.keras.models.Model:
+def load_model(model_path: str) -> tf.keras.models.Model:
     """Load the model from the file if it exists, otherwise return a new model."""
     try:
         # load the model
-        model = tf.keras.models.load_model('trash_recognition_model.h5')
+        model = tf.keras.models.load_model(model_path)
     except FileNotFoundError or OSError as exc:
         model = new_model
         logging.error(f'Error loading model: {exc}')
-    finally:
-        model.summary()
-        return model
+
+    model.summary()
+    return model
 
 
 def generate_dataset(subset: str = "training", batch_size: int = 16) -> tf.data.Dataset:
@@ -74,11 +90,11 @@ def generate_dataset(subset: str = "training", batch_size: int = 16) -> tf.data.
     )
 
 
-def test_model(times: int = 100) -> int:
+def test_model(model_path: str, times: int = 10) -> int:
     """Test the model on the dataset."""
     avg_acc = 0
 
-    model = load_model()
+    model = load_model(model_path)
     test_dataset = generate_dataset(subset="validation")
 
     for _ in range(times):
@@ -90,40 +106,40 @@ def test_model(times: int = 100) -> int:
     return avg_acc
 
 
-def train_model(test: bool = True) -> tf.keras.callbacks.History:
+def train_model(model_path: str, epochs: int = 10, test: bool = True) -> tf.keras.callbacks.History:
     """Train the model on the dataset."""
-    model = load_model()
+    model = load_model(model_path)
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
-                  metrics=['accuracy'])
+                  metrics=['accuracy'],)
     logging.debug('Model compiled')
 
     dataset = generate_dataset()
     validation_dataset = generate_dataset(subset="validation")
     logging.debug('Dataset loaded')
 
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
     # Train the model
     train_history = model.fit(
         dataset,
         validation_data=validation_dataset,
-        epochs=10  # Number of epochs for training
+        epochs=epochs,  # Number of epochs for training
+        callbacks=[early_stopping],
     )
 
     if test:
-        test_model()
+        test_model(model_path)
 
     # Save the model
-    model.save('trash_recognition_model.h5')
+    model.save(model_path.replace('.h5', '.keras'))
     logging.debug('Model saved')
 
     return train_history
 
 
-for x in range(10):
-    print(f'Iteration {x + 1}')
-
-    history = train_model()
-
+def plot_history(history: tf.keras.callbacks.History):
+    """Plot the training and validation history."""
     acc = history.history['accuracy']
     val_acc = history.history['val_accuracy']
     loss = history.history['loss']
@@ -144,3 +160,8 @@ for x in range(10):
     plt.legend(loc='upper right')
     plt.title('Training and Validation Loss')
     plt.show()
+
+
+if __name__ == '__main__':
+    history = train_model("sortbot_beta.h5", epochs=25)
+    plot_history(history)
